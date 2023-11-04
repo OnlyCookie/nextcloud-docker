@@ -5,7 +5,7 @@ services:
     image: nextcloud:${NEXTCLOUD_TAG}
     restart: unless-stopped
     ports:
-      - 5001:80
+      - ${NEXTCLOUD_HTTP_PORT}:80
     volumes:
       - ${NEXTCLOUD_DATA_PATH}:/var/www/html/data
       - nextcloud:/var/www/html/
@@ -25,7 +25,7 @@ services:
     build: 
       context: ./nextcloud-cron
       args:
-        - NEXTCLOUD_TAG: ${NEXTCLOUD_TAG}
+        - NEXTCLOUD_TAG=${NEXTCLOUD_TAG}
     restart: unless-stopped	
     volumes:
       - ${NEXTCLOUD_DATA_PATH}:/var/www/html/data
