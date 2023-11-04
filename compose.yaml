@@ -2,19 +2,19 @@ version: '3.8'
 
 services:
   app:
-    image: nextcloud:latest
-    restart: always
+    image: nextcloud:${NEXTCLOUD_TAG}
+    restart: unless-stopped
     ports:
       - 5001:80
     volumes:
-      - /mnt/nfstest/test-nextcloud:/var/www/html/data
+      - ${NEXTCLOUD_DATA_PATH}:/var/www/html/data
       - nextcloud:/var/www/html/
       - clamav-sock:/run/clamav
     environment:
       - REDIS_HOST=redis
-      - POSTGRES_DB=test-nextcloud
-      - POSTGRES_USER=nextcloud
-      - POSTGRES_PASSWORD=nextcloud-db-temp-password
+      - POSTGRES_DB=${POSTGRES_DB_NAME}
+      - POSTGRES_USER=${POSTGRES_NEXTCLOUD_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_NEXTCLOUD_PASS}
       - POSTGRES_HOST=db
     depends_on:
       - db
@@ -22,35 +22,38 @@ services:
       - av
 
   cron:
-    image: nextcloud-cron:test
-    restart: always
-    # user: www-data:www-data
+    build: 
+      context: ./nextcloud-cron
+      args:
+        - NEXTCLOUD_TAG: ${NEXTCLOUD_TAG}
+    restart: unless-stopped	
     volumes:
-      - /mnt/nfstest/test-nextcloud:/var/www/html/data
+      - ${NEXTCLOUD_DATA_PATH}:/var/www/html/data
       - nextcloud:/var/www/html/
+      - clamav-sock:/run/clamav 
     depends_on: 
       - app
     entrypoint: /cron.sh
   
   av:
-    image: clamav/clamav:stable
+    image: clamav/clamav:${CLAMAV_TAG}
     volumes:
       - clamav-db:/var/lib/clamav
       - clamav-sock:/tmp
 
   db:
-    image: postgres:13-bookworm
-    restart: always
+    image: postgres:${POSTGRESQL_TAG}
+    restart: unless-stopped
     environment:
-      - POSTGRES_USER=nextcloud
-      - POSTGRES_PASSWORD=nextcloud-db-temp-password
-      - POSTGRES_DB=test-nextcloud
+      - POSTGRES_USER=${POSTGRES_NEXTCLOUD_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_NEXTCLOUD_PASS}
+      - POSTGRES_DB=${POSTGRES_DB_NAME}
     volumes:
       - postgres:/var/lib/postgresql/data
   
   redis:
-    image: redis:bookworm
-    restart: always
+    image: redis:${REDIS_TAG}
+    restart: unless-stopped
 
 volumes:
   nextcloud:
